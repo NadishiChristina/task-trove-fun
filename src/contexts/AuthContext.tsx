@@ -22,8 +22,8 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock users for demo
-const mockUsers = [
+// Mock users for demo - this will now be updated with newly registered users
+let mockUsers = [
   {
     id: 'admin1',
     name: 'Admin User',
@@ -113,16 +113,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return;
         }
         
+        // Create new user with password
         const newUser = {
           id: `user-${Date.now()}`,
           name,
           email,
+          password, // Store password for mock authentication
           role,
         };
         
-        setUser(newUser);
+        // Add to mock users array for future login
+        mockUsers.push(newUser);
+        
+        // Remove password before setting in state and storage
+        const { password: pwd, ...userWithoutPassword } = newUser;
+        
+        setUser(userWithoutPassword);
         setIsAuthenticated(true);
-        localStorage.setItem('user', JSON.stringify(newUser));
+        localStorage.setItem('user', JSON.stringify(userWithoutPassword));
         
         toast({
           title: 'Account created!',
