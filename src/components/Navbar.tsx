@@ -24,11 +24,12 @@ import {
   X,
 } from 'lucide-react';
 import { FadeIn } from './animations/PageTransition';
+import { useAuth } from '@/contexts/AuthContext';
 
 type NavbarProps = {
   user?: {
     name: string;
-    email: string;
+    email?: string;
     avatar?: string;
     role: 'admin' | 'employee';
   } | null;
@@ -40,7 +41,7 @@ export function Navbar({ user, onMenuToggle, isMobile }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const location = useLocation();
-  const isAuthenticated = !!user;
+  const { isAuthenticated, logout } = useAuth();
   const isLandingPage = location.pathname === '/';
 
   useEffect(() => {
@@ -56,6 +57,11 @@ export function Navbar({ user, onMenuToggle, isMobile }: NavbarProps) {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
     document.documentElement.classList.toggle('dark', newTheme === 'dark');
+  };
+
+  const getDashboardUrl = () => {
+    if (!user) return '/login';
+    return user.role === 'admin' ? '/admin-dashboard' : '/employee-dashboard';
   };
 
   return (
@@ -96,7 +102,7 @@ export function Navbar({ user, onMenuToggle, isMobile }: NavbarProps) {
         
         <FadeIn>
           <div className="flex items-center gap-2">
-            {isAuthenticated ? (
+            {isAuthenticated && user ? (
               <>
                 <Button
                   variant="ghost"
@@ -156,7 +162,10 @@ export function Navbar({ user, onMenuToggle, isMobile }: NavbarProps) {
                       </span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="flex items-center gap-2 text-destructive focus:text-destructive">
+                    <DropdownMenuItem 
+                      className="flex items-center gap-2 text-destructive focus:text-destructive"
+                      onClick={logout}
+                    >
                       <LogOut className="h-4 w-4" />
                       <span>Log out</span>
                     </DropdownMenuItem>

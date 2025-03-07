@@ -17,6 +17,7 @@ import {
   X,
 } from 'lucide-react';
 import { FadeIn, SlideIn } from './animations/PageTransition';
+import { useAuth } from '@/contexts/AuthContext';
 
 type SidebarProps = {
   isOpen: boolean;
@@ -37,17 +38,20 @@ type NavItem = {
 export function Sidebar({ isOpen, onClose, user }: SidebarProps) {
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const { logout } = useAuth();
 
-  const navItems: NavItem[] = [
+  // Different nav items based on user role
+  const adminNavItems: NavItem[] = [
     {
-      title: 'Dashboard',
+      title: 'Admin Dashboard',
       icon: LayoutDashboard,
-      href: '/dashboard',
+      href: '/admin-dashboard',
+      adminOnly: true,
     },
     {
       title: 'My Tasks',
       icon: CheckSquare,
-      href: '/tasks',
+      href: '/employee-dashboard',
     },
     {
       title: 'Analytics',
@@ -73,6 +77,26 @@ export function Sidebar({ isOpen, onClose, user }: SidebarProps) {
     },
   ];
 
+  const employeeNavItems: NavItem[] = [
+    {
+      title: 'My Tasks',
+      icon: CheckSquare,
+      href: '/employee-dashboard',
+    },
+    {
+      title: 'Achievements',
+      icon: Award,
+      href: '/achievements',
+    },
+    {
+      title: 'Settings',
+      icon: Settings,
+      href: '/settings',
+    },
+  ];
+
+  const navItems = user.role === 'admin' ? adminNavItems : employeeNavItems;
+
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
@@ -85,6 +109,11 @@ export function Sidebar({ isOpen, onClose, user }: SidebarProps) {
   const filteredNavItems = navItems.filter(
     (item) => !item.adminOnly || user.role === 'admin'
   );
+
+  const handleLogout = () => {
+    logout();
+    onClose();
+  };
 
   if (isMobile) {
     return (
@@ -118,6 +147,9 @@ export function Sidebar({ isOpen, onClose, user }: SidebarProps) {
               <SidebarContent
                 items={filteredNavItems}
                 currentPath={location.pathname}
+                onItemClick={onClose}
+                onLogout={handleLogout}
+                isAdmin={user.role === 'admin'}
               />
             </div>
           </ScrollArea>
@@ -133,6 +165,8 @@ export function Sidebar({ isOpen, onClose, user }: SidebarProps) {
           <SidebarContent
             items={filteredNavItems}
             currentPath={location.pathname}
+            onLogout={handleLogout}
+            isAdmin={user.role === 'admin'}
           />
         </div>
       </ScrollArea>
@@ -143,9 +177,15 @@ export function Sidebar({ isOpen, onClose, user }: SidebarProps) {
 function SidebarContent({
   items,
   currentPath,
+  onItemClick,
+  onLogout,
+  isAdmin,
 }: {
   items: NavItem[];
   currentPath: string;
+  onItemClick?: () => void;
+  onLogout: () => void;
+  isAdmin: boolean;
 }) {
   return (
     <FadeIn>
@@ -165,6 +205,7 @@ function SidebarContent({
                   ? 'bg-primary text-primary-foreground'
                   : 'text-muted-foreground hover:text-foreground hover:bg-accent'
               )}
+              onClick={onItemClick}
             >
               <item.icon className="h-5 w-5" />
               {item.title}
@@ -174,23 +215,28 @@ function SidebarContent({
         
         <SlideIn delay={items.length * 0.05} direction="left" className="w-full">
           <div className="mt-6 pt-6 border-t border-border">
-            <Link
-              to="/logout"
-              className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            <Button
+              variant="ghost" 
+              className="w-full justify-start gap-3 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              onClick={onLogout}
             >
               <LogOut className="h-5 w-5" />
               Logout
-            </Link>
-          </div>
-        </SlideIn>
-
-        <SlideIn delay={(items.length + 1) * 0.05} direction="left" className="w-full">
-          <div className="mt-6 pt-3">
-            <Button variant="outline" className="w-full justify-start gap-2">
-              <PlusCircle className="h-4 w-4" /> Create New Task
             </Button>
           </div>
         </SlideIn>
+
+        {isAdmin && (
+          <SlideIn delay={(items.length + 1) * 0.05} direction="left" className="w-full">
+            <div className="mt-6 pt-3">
+              <Link to="/admin-dashboard">
+                <Button variant="outline" className="w-full justify-start gap-2">
+                  <PlusCircle className="h-4 w-4" /> Create New Task
+                </Button>
+              </Link>
+            </div>
+          </SlideIn>
+        )}
       </div>
     </FadeIn>
   );

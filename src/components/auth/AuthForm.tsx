@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { ScaleIn } from '../animations/PageTransition';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 type AuthFormProps = {
   type: 'login' | 'register';
@@ -28,30 +29,24 @@ export function AuthForm({ type }: AuthFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate();
+  const { login, register } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      
+    try {
       if (type === 'login') {
-        toast({
-          title: 'Welcome back!',
-          description: 'You have successfully logged in.',
-        });
-        navigate('/dashboard');
+        await login(email, password);
       } else {
-        toast({
-          title: 'Account created!',
-          description: 'Your account has been created successfully.',
-        });
-        navigate('/dashboard');
+        await register(name, email, password, role);
       }
-    }, 1500);
+    } catch (error) {
+      // Error handling is done in the auth context
+      console.error('Authentication error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
